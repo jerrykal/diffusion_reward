@@ -60,7 +60,7 @@ def get_world_size():
 
 
 def is_distributed():
-    raise RuntimeError('Please debug this function!')
+    raise RuntimeError("Please debug this function!")
     return get_world_size() > 1
 
 

@@ -4,13 +4,14 @@ from .base_embedding import BaseEmbedding
 
 
 class FrameEmbedding(BaseEmbedding):
-    def __init__(self, 
-                 num_embed=1000,
-                 embed_dim=512,
-                 identity=False,
-                 trainable=True,
-                 num_cond_frames=2,
-        ):
+    def __init__(
+        self,
+        num_embed=1000,
+        embed_dim=512,
+        identity=False,
+        trainable=True,
+        num_cond_frames=2,
+    ):
         super().__init__()
         self.identity = identity
         self.trainable = trainable
@@ -28,6 +29,5 @@ class FrameEmbedding(BaseEmbedding):
         if self.identity == True:
             return index
         else:
-            emb = self.emb(index)#.unsqueeze(1)
+            emb = self.emb(index)  # .unsqueeze(1)
             return emb
-

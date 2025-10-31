@@ -1,7 +1,8 @@
-import diffusion_reward.models.video_models.vqdiffusion.distributed.distributed as dist_fn
 import torch
 from torch import distributed as dist
 from torch import multiprocessing as mp
+
+import diffusion_reward.models.video_models.vqdiffusion.distributed.distributed as dist_fn
 
 
 def find_free_port():
@@ -31,9 +32,7 @@ def launch(fn, n_gpu_per_machine, n_machine=1, machine_rank=0, dist_url=None, ar
             dist_url = f"tcp://127.0.0.1:{port}"
 
         if n_machine > 1 and dist_url.startswith("file://"):
-            raise ValueError(
-                "file:// is not a reliable init method in multi-machine jobs. Prefer tcp://"
-            )
+            raise ValueError("file:// is not a reliable init method in multi-machine jobs. Prefer tcp://")
 
         mp.spawn(
             distributed_worker,
@@ -47,9 +46,7 @@ def launch(fn, n_gpu_per_machine, n_machine=1, machine_rank=0, dist_url=None, ar
         fn(local_rank, *args)
 
 
-def distributed_worker(
-    local_rank, fn, world_size, n_gpu_per_machine, machine_rank, dist_url, args
-):
+def distributed_worker(local_rank, fn, world_size, n_gpu_per_machine, machine_rank, dist_url, args):
     if not torch.cuda.is_available():
         raise OSError("CUDA is not available. Please check your environments")
 
@@ -69,9 +66,7 @@ def distributed_worker(
     dist_fn.synchronize()
 
     if n_gpu_per_machine > torch.cuda.device_count():
-        raise ValueError(
-            f"specified n_gpu_per_machine larger than available device ({torch.cuda.device_count()})"
-        )
+        raise ValueError(f"specified n_gpu_per_machine larger than available device ({torch.cuda.device_count()})")
 
     torch.cuda.set_device(local_rank)
 

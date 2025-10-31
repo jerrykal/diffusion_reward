@@ -3,28 +3,32 @@ Minimize bc loss (MLE, MSE, RWR etc.) with pytorch optimizers
 """
 
 import logging
+
 logging.disable(logging.CRITICAL)
-import numpy as np
 import time as timer
+
+import numpy as np
 import torch
 from torch.autograd import Variable
-from mjrl.utils.logger import DataLog
 from tqdm import tqdm
+
+from mjrl.utils.logger import DataLog
 
 
 class BC:
-    def __init__(self, expert_paths,
-                 policy,
-                 epochs = 5,
-                 batch_size = 64,
-                 lr = 1e-3,
-                 optimizer = None,
-                 loss_type = 'MSE',  # can be 'MLE' or 'MSE'
-                 save_logs = True,
-                 set_transforms = False,
-                 **kwargs,
-                 ):
-
+    def __init__(
+        self,
+        expert_paths,
+        policy,
+        epochs=5,
+        batch_size=64,
+        lr=1e-3,
+        optimizer=None,
+        loss_type="MSE",  # can be 'MLE' or 'MSE'
+        save_logs=True,
+        set_transforms=False,
+        **kwargs,
+    ):
         self.policy = policy
         self.expert_paths = expert_paths
         self.epochs = epochs
@@ -42,7 +46,7 @@ class BC:
         self.optimizer = torch.optim.Adam(self.policy.trainable_params, lr=lr) if optimizer is None else optimizer
 
         # Loss criterion if required
-        if loss_type == 'MSE':
+        if loss_type == "MSE":
             self.loss_criterion = torch.nn.MSELoss()
 
         # make logger
@@ -68,13 +72,13 @@ class BC:
     def set_variance_with_data(self, out_scale):
         # set the variance of gaussian policy based on out_scale
         params = self.policy.get_param_values()
-        params[-self.policy.m:] = np.log(out_scale + 1e-12)
+        params[-self.policy.m :] = np.log(out_scale + 1e-12)
         self.policy.set_param_values(params)
 
     def loss(self, data, idx=None):
-        if self.loss_type == 'MLE':
+        if self.loss_type == "MLE":
             return self.mle_loss(data, idx)
-        elif self.loss_type == 'MSE':
+        elif self.loss_type == "MSE":
             return self.mse_loss(data, idx)
         else:
             print("Please use valid loss type")
@@ -83,22 +87,22 @@ class BC:
     def mle_loss(self, data, idx):
         # use indices if provided (e.g. for mini-batching)
         # otherwise, use all the data
-        idx = range(data['observations'].shape[0]) if idx is None else idx
-        if type(data['observations']) == torch.Tensor:
+        idx = range(data["observations"].shape[0]) if idx is None else idx
+        if type(data["observations"]) == torch.Tensor:
             idx = torch.LongTensor(idx)
-        obs = data['observations'][idx]
-        act = data['expert_actions'][idx]
+        obs = data["observations"][idx]
+        act = data["expert_actions"][idx]
         LL, mu, log_std = self.policy.new_dist_info(obs, act)
         # minimize negative log likelihood
         return -torch.mean(LL)
 
     def mse_loss(self, data, idx=None):
-        idx = range(data['observations'].shape[0]) if idx is None else idx
-        if type(data['observations']) is torch.Tensor:
+        idx = range(data["observations"].shape[0]) if idx is None else idx
+        if type(data["observations"]) is torch.Tensor:
             idx = torch.LongTensor(idx)
-        obs = data['observations'][idx]
-        act_expert = data['expert_actions'][idx]
-        if type(data['observations']) is not torch.Tensor:
+        obs = data["observations"][idx]
+        act_expert = data["expert_actions"][idx]
+        if type(data["observations"]) is not torch.Tensor:
             obs = Variable(torch.from_numpy(obs).float(), requires_grad=False)
             act_expert = Variable(torch.from_numpy(act_expert).float(), requires_grad=False)
         act_pi = self.policy.model(obs)
@@ -115,7 +119,7 @@ class BC:
         # log stats before
         if self.save_logs:
             loss_val = self.loss(data, idx=range(num_samples)).data.numpy().ravel()[0]
-            self.logger.log_kv('loss_before', loss_val)
+            self.logger.log_kv("loss_before", loss_val)
 
         # train loop
         for ep in config_tqdm(range(self.epochs), suppress_fit_tqdm):
@@ -130,10 +134,10 @@ class BC:
 
         # log stats after
         if self.save_logs:
-            self.logger.log_kv('epoch', self.epochs)
+            self.logger.log_kv("epoch", self.epochs)
             loss_val = self.loss(data, idx=range(num_samples)).data.numpy().ravel()[0]
-            self.logger.log_kv('loss_after', loss_val)
-            self.logger.log_kv('time', (timer.time()-ts))
+            self.logger.log_kv("loss_after", loss_val)
+            self.logger.log_kv("time", (timer.time() - ts))
 
     def train(self, **kwargs):
         observations = np.concatenate([path["observations"] for path in self.expert_paths])

@@ -1,22 +1,24 @@
 import numpy as np
+
 from mjrl.algos.model_accel.sampling import generate_paths, generate_perturbed_actions, trajectory_rollout
 
 
-class MPCPolicy(object):
-    def __init__(self, env,
-                 plan_horizon,
-                 plan_paths=10,
-                 kappa=1.0,
-                 gamma=1.0,
-                 mean=None,
-                 filter_coefs=None,
-                 seed=123,
-                 warmstart=True,
-                 fitted_model=None,
-                 omega=5.0,
-                 **kwargs,
-                 ):
-
+class MPCPolicy:
+    def __init__(
+        self,
+        env,
+        plan_horizon,
+        plan_paths=10,
+        kappa=1.0,
+        gamma=1.0,
+        mean=None,
+        filter_coefs=None,
+        seed=123,
+        warmstart=True,
+        fitted_model=None,
+        omega=5.0,
+        **kwargs,
+    ):
         # initialize
         self.env, self.seed = env, seed
         self.n, self.m = env.observation_dim, env.action_dim
@@ -42,12 +44,10 @@ class MPCPolicy(object):
     def get_action(self, obs):
         # generate paths
         if type(self.fitted_model) == list:
-
             # Ensemble case
             # Collect trajectories from different models with same action sequences
             base_act = self.act_sequence
-            act_list = [generate_perturbed_actions(base_act, self.filter_coefs)
-                        for _ in range(self.num_traj)]
+            act_list = [generate_perturbed_actions(base_act, self.filter_coefs) for _ in range(self.num_traj)]
             actions = np.array(act_list)
             paths_list = []
             for model in self.fitted_model:
@@ -62,8 +62,13 @@ class MPCPolicy(object):
             R = self.score_trajectory_ensemble(paths, paths_list)
 
         else:
-            paths = generate_paths(num_traj=self.num_traj, fitted_model=self.fitted_model,
-                                   start_state=obs, base_act=self.act_sequence, filter_coefs=self.filter_coefs)
+            paths = generate_paths(
+                num_traj=self.num_traj,
+                fitted_model=self.fitted_model,
+                start_state=obs,
+                base_act=self.act_sequence,
+                filter_coefs=self.filter_coefs,
+            )
             self.env.env.env.compute_path_rewards(paths)  # will populate path['rewards']
             R = self.score_trajectory(paths)
 
@@ -85,17 +90,17 @@ class MPCPolicy(object):
     def score_trajectory_ensemble(self, paths, paths_list):
         num_traj = self.num_traj
         num_models = len(paths_list)
-        total_traj = paths['rewards'].shape[0]
-        horizon = paths['rewards'].shape[1]
-        predictions = [p['observations'] for p in paths_list]
-        disagreement = np.std(predictions, axis=0)      # (num_traj, horizon, state_dim)
-        disagreement = np.sum(disagreement, axis=(1,2)) # (num_traj,)
+        total_traj = paths["rewards"].shape[0]
+        horizon = paths["rewards"].shape[1]
+        predictions = [p["observations"] for p in paths_list]
+        disagreement = np.std(predictions, axis=0)  # (num_traj, horizon, state_dim)
+        disagreement = np.sum(disagreement, axis=(1, 2))  # (num_traj,)
         scores = np.zeros(total_traj)
         for i in range(total_traj):
             disagreement_score = disagreement[i // self.num_traj]
             scores[i] = self.omega * disagreement_score
             for t in range(horizon):
-                scores[i] += (self.gamma ** t) * paths["rewards"][i][t]
+                scores[i] += (self.gamma**t) * paths["rewards"][i][t]
         return scores
 
     def score_trajectory(self, paths):
@@ -106,5 +111,5 @@ class MPCPolicy(object):
         for i in range(num_traj):
             scores[i] = 0.0
             for t in range(horizon):
-                scores[i] += (self.gamma**t)*paths["rewards"][i][t]
+                scores[i] += (self.gamma**t) * paths["rewards"][i][t]
         return scores

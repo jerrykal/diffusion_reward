@@ -2,13 +2,12 @@ from torch import nn
 
 
 class BaseCodec(nn.Module):
-    
     def get_tokens(self, x, **kwargs):
         """
-        Input: 
+        Input:
             x: input data
         Return:
-            indices: B x L, the codebook indices, where L is the length 
+            indices: B x L, the codebook indices, where L is the length
                     of flattened feature map size
         """
         raise NotImplementedError

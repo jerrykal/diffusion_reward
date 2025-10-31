@@ -1,11 +1,11 @@
 import random
 import re
 import time
-
-from copy import deepcopy
 from collections import defaultdict
-import numpy as np
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 from torch import distributions as pyd
@@ -38,8 +38,7 @@ def set_seed_everywhere(seed):
 
 def soft_update_params(net, target_net, tau):
     for param, target_param in zip(net.parameters(), target_net.parameters()):
-        target_param.data.copy_(tau * param.data +
-                                (1 - tau) * target_param.data)
+        target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
 
 def to_torch(xs, device):
@@ -49,12 +48,12 @@ def to_torch(xs, device):
 def weight_init(m):
     if isinstance(m, nn.Linear):
         nn.init.orthogonal_(m.weight.data)
-        if hasattr(m.bias, 'data'):
+        if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
     elif isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-        gain = nn.init.calculate_gain('relu')
+        gain = nn.init.calculate_gain("relu")
         nn.init.orthogonal_(m.weight.data, gain)
-        if hasattr(m.bias, 'data'):
+        if hasattr(m.bias, "data"):
             m.bias.data.fill_(0.0)
 
 
@@ -113,9 +112,7 @@ class TruncatedNormal(pyd.Normal):
 
     def sample(self, clip=None, sample_shape=torch.Size()):
         shape = self._extended_shape(sample_shape)
-        eps = _standard_normal(shape,
-                               dtype=self.loc.dtype,
-                               device=self.loc.device)
+        eps = _standard_normal(shape, dtype=self.loc.dtype, device=self.loc.device)
         eps *= self.scale
         if clip is not None:
             eps = torch.clamp(eps, -clip, clip)
@@ -127,16 +124,14 @@ def schedule(schdl, step):
     try:
         return float(schdl)
     except ValueError:
-        match = re.match(r'linear\((.+),(.+),(.+)\)', schdl)
+        match = re.match(r"linear\((.+),(.+),(.+)\)", schdl)
         if match:
             init, final, duration = [float(g) for g in match.groups()]
             mix = np.clip(step / duration, 0.0, 1.0)
             return (1.0 - mix) * init + mix * final
-        match = re.match(r'step_linear\((.+),(.+),(.+),(.+),(.+)\)', schdl)
+        match = re.match(r"step_linear\((.+),(.+),(.+),(.+),(.+)\)", schdl)
         if match:
-            init, final1, duration1, final2, duration2 = [
-                float(g) for g in match.groups()
-            ]
+            init, final1, duration1, final2, duration2 = [float(g) for g in match.groups()]
             if step <= duration1:
                 mix = np.clip(step / duration1, 0.0, 1.0)
                 return (1.0 - mix) * init + mix * final1
@@ -169,18 +164,14 @@ def cal_dormant_ratio(model, *inputs, percentage=0.025):
     with torch.no_grad():
         model(*inputs)
 
-    for module, hook in zip(
-        (module
-         for module in model.modules() if isinstance(module, nn.Linear)),
-            hooks):
+    for module, hook in zip((module for module in model.modules() if isinstance(module, nn.Linear)), hooks):
         with torch.no_grad():
             for output_data in hook.outputs:
                 mean_output = output_data.abs().mean(0)
                 avg_neuron_output = mean_output.mean()
-                dormant_indices = (mean_output < avg_neuron_output *
-                                   percentage).nonzero(as_tuple=True)[0]
+                dormant_indices = (mean_output < avg_neuron_output * percentage).nonzero(as_tuple=True)[0]
                 total_neurons += module.weight.shape[0]
-                dormant_neurons += len(dormant_indices)         
+                dormant_neurons += len(dormant_indices)
 
     for hook in hooks:
         hook.outputs.clear()
@@ -192,10 +183,7 @@ def cal_dormant_ratio(model, *inputs, percentage=0.025):
 
 
 def perturb(net, optimizer, perturb_factor):
-    linear_keys = [
-        name for name, mod in net.named_modules()
-        if isinstance(mod, torch.nn.Linear)
-    ]
+    linear_keys = [name for name, mod in net.named_modules() if isinstance(mod, torch.nn.Linear)]
     new_net = deepcopy(net)
     new_net.apply(weight_init)
 

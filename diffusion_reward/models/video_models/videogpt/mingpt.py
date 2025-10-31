@@ -16,7 +16,8 @@ from torch.nn import functional as F
 
 
 class GPTConfig:
-    """ base GPT config, params common to all GPT versions """
+    """base GPT config, params common to all GPT versions"""
+
     embd_pdrop = 0.1
     resid_pdrop = 0.1
     attn_pdrop = 0.1
@@ -48,10 +49,9 @@ class CausalSelfAttention(nn.Module):
         # output projection
         self.proj = nn.Linear(config.n_embd, config.n_embd)
         # causal mask to ensure that attention is only applied to the left in the input sequence
-        mask = torch.tril(torch.ones(config.block_size,
-                                     config.block_size))
+        mask = torch.tril(torch.ones(config.block_size, config.block_size))
         if hasattr(config, "n_unmasked"):
-            mask[:config.n_unmasked, :config.n_unmasked] = 1
+            mask[: config.n_unmasked, : config.n_unmasked] = 1
         self.register_buffer("mask", mask.view(1, 1, config.block_size, config.block_size))
         self.n_head = config.n_head
 
@@ -72,7 +72,7 @@ class CausalSelfAttention(nn.Module):
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
         if layer_past is None:
-            att = att.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
+            att = att.masked_fill(self.mask[:, :, :T, :T] == 0, float("-inf"))
 
         att = F.softmax(att, dim=-1)
         att = self.attn_drop(att)
@@ -85,7 +85,7 @@ class CausalSelfAttention(nn.Module):
 
 
 class Block(nn.Module):
-    """ an unassuming Transformer block """
+    """an unassuming Transformer block"""
 
     def __init__(self, config):
         super().__init__()
@@ -114,15 +114,34 @@ class Block(nn.Module):
 
 
 class GPT(nn.Module):
-    """  the full GPT language model, with a context size of block_size """
+    """the full GPT language model, with a context size of block_size"""
 
-    def __init__(self, vocab_size, block_size, n_layer=12, n_head=8, n_embd=256,
-                 embd_pdrop=0., resid_pdrop=0., attn_pdrop=0., n_unmasked=0, use_vqemb=False, code_dim=None):
+    def __init__(
+        self,
+        vocab_size,
+        block_size,
+        n_layer=12,
+        n_head=8,
+        n_embd=256,
+        embd_pdrop=0.0,
+        resid_pdrop=0.0,
+        attn_pdrop=0.0,
+        n_unmasked=0,
+        use_vqemb=False,
+        code_dim=None,
+    ):
         super().__init__()
-        config = GPTConfig(vocab_size=vocab_size, block_size=block_size,
-                           embd_pdrop=embd_pdrop, resid_pdrop=resid_pdrop, attn_pdrop=attn_pdrop,
-                           n_layer=n_layer, n_head=n_head, n_embd=n_embd,
-                           n_unmasked=n_unmasked)
+        config = GPTConfig(
+            vocab_size=vocab_size,
+            block_size=block_size,
+            embd_pdrop=embd_pdrop,
+            resid_pdrop=resid_pdrop,
+            attn_pdrop=attn_pdrop,
+            n_layer=n_layer,
+            n_head=n_head,
+            n_embd=n_embd,
+            n_unmasked=n_unmasked,
+        )
         # input embedding stem
         if not use_vqemb:
             self.tok_emb = nn.Embedding(config.vocab_size, config.n_embd)
@@ -166,4 +185,3 @@ class GPT(nn.Module):
         logits = self.head(x)
 
         return logits, None
-

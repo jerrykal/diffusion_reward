@@ -44,7 +44,9 @@ class VideoGPTTransformer(nn.Module):
     @torch.no_grad()
     def z_to_image(self, indices):
         p = self.args.latent_size
-        ix_to_vectors = self.vqgan.codebook.embedding(indices).reshape(indices.shape[0] * (indices.shape[1] // p // p), p, p, self.args.code_dim)
+        ix_to_vectors = self.vqgan.codebook.embedding(indices).reshape(
+            indices.shape[0] * (indices.shape[1] // p // p), p, p, self.args.code_dim
+        )
         ix_to_vectors = ix_to_vectors.permute(0, 3, 1, 2)
 
         image = self.vqgan.decode(ix_to_vectors)
@@ -98,7 +100,7 @@ class VideoGPTTransformer(nn.Module):
     def sample(self, embs, x_, c, steps, temperature=1.0, top_k=1):
         self.transformer.eval()
         if not self.use_vqemb:
-            x = torch.cat((c, x_), dim=1) if x_ is not None else c    # prior sampling
+            x = torch.cat((c, x_), dim=1) if x_ is not None else c  # prior sampling
         else:
             x = torch.cat((c, embs), dim=1) if x_ is not None else c
         sos_tokens = torch.ones(x.shape[0], 1) * self.sos_token
@@ -121,7 +123,7 @@ class VideoGPTTransformer(nn.Module):
 
             x = torch.cat((x, ix), dim=1)
 
-        indices = indices[:, c.shape[1]:]
+        indices = indices[:, c.shape[1] :]
         self.transformer.train()
         return indices
 
@@ -132,15 +134,15 @@ class VideoGPTTransformer(nn.Module):
         embs, indices = self.encode_to_z(x)
         sos_tokens = self.calc_sos_tokens(x, embs)
 
-        start_embs = embs[:, :-indices.shape[1] // x.shape[1], :]
-        start_indices = indices[:, :-indices.shape[1] // x.shape[1]]
-        
-        sample_indices = self.sample(start_embs, start_indices, sos_tokens, steps=indices.shape[1] - start_indices.shape[1])
-        
+        start_embs = embs[:, : -indices.shape[1] // x.shape[1], :]
+        start_indices = indices[:, : -indices.shape[1] // x.shape[1]]
+
+        sample_indices = self.sample(
+            start_embs, start_indices, sos_tokens, steps=indices.shape[1] - start_indices.shape[1]
+        )
+
         half_sample = self.z_to_image(sample_indices)
 
         log["input"] = x[0, :, :, :, :]
         log["half_sample"] = half_sample[-1].unsqueeze(0)
         return log, torch.concat((x[0, :, :, :, :], half_sample[-1].unsqueeze(0)))
-
-

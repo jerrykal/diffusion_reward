@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 #                  Data Utils
 # --------------------------------------------- #
 
+
 class ImagePaths(Dataset):
     def __init__(self, path, size=None, is_train=True):
         self.size = size
@@ -19,11 +20,11 @@ class ImagePaths(Dataset):
         self.images = []
         for root, subdirs, files in os.walk(path):
             for name in files:
-                if is_train and 'train' in root:
+                if is_train and "train" in root:
                     self.images.append(os.path.join(root, name))
-                if not is_train and 'test' in root:
+                if not is_train and "test" in root:
                     self.images.append(os.path.join(root, name))
-                
+
         self._length = len(self.images)
         self.preprocessor = lambda x: x
 
@@ -58,11 +59,12 @@ def load_data(args):
 #            for Encoder, Decoder etc.
 # --------------------------------------------- #
 
+
 def weights_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
@@ -79,5 +81,3 @@ def weights_init(m):
 #     axarr[2].imshow(half_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
 #     axarr[3].imshow(full_sample.cpu().detach().numpy()[0].transpose(1, 2, 0))
 #     plt.show()
-
-

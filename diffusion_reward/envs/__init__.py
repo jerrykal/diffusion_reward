@@ -1,6 +1,7 @@
+import metaworld.envs.mujoco.env_dict as _mw_envs
+
 import diffusion_reward.envs.adroit as adroit
 import diffusion_reward.envs.metaworld as metaworld
-import metaworld.envs.mujoco.env_dict as _mw_envs
 
 from .adroit import _mj_envs
 

@@ -19,12 +19,12 @@ def save_episode(episode, fn):
     with io.BytesIO() as bs:
         np.savez_compressed(bs, **episode)
         bs.seek(0)
-        with fn.open('wb') as f:
+        with fn.open("wb") as f:
             f.write(bs.read())
 
 
 def load_episode(fn):
-    with fn.open('rb') as f:
+    with fn.open("rb") as f:
         episode = np.load(f)
         episode = {k: episode[k] for k in episode.keys()}
         return episode
@@ -35,7 +35,7 @@ class ReplayCache:
         self.images = []
         self.time_steps = []
         self.device = device
-        
+
     def add(self, time_step):
         self.images.append(time_step.observation)
         self.time_steps.append(time_step)
@@ -88,16 +88,16 @@ class AMPBuffer:
         return obses
 
     def init_demo(self):
-        '''Load video dataset'''
+        """Load video dataset"""
         from PIL import Image
 
-        root_dir = f'/home/taohuang/project/qizhi/diffusion-as-reward/video_dataset/{self.cfg.domain}'
+        root_dir = f"/home/taohuang/project/qizhi/diffusion-as-reward/video_dataset/{self.cfg.domain}"
         task = self.cfg.task_name
-        task_path = os.path.join(root_dir, task, 'train') 
-        task_videos = [os.path.join(task_path, f'{i}') for i in range(len(os.listdir(task_path)))]
+        task_path = os.path.join(root_dir, task, "train")
+        task_videos = [os.path.join(task_path, f"{i}") for i in range(len(os.listdir(task_path)))]
         for video_path in task_videos:
             frames = os.listdir(video_path)
-            frame_path = [os.path.join(video_path, f'{i}.png') for i in range(len(frames))]
+            frame_path = [os.path.join(video_path, f"{i}.png") for i in range(len(frames))]
             for frame in frame_path:
                 self.add(np.array(Image.open(frame)).astype(np.uint8))
 
@@ -131,8 +131,8 @@ class ReplayBufferStorage:
     def _preload(self):
         self._num_episodes = 0
         self._num_transitions = 0
-        for fn in self._replay_dir.glob('*.npz'):
-            _, _, eps_len = fn.stem.split('_')
+        for fn in self._replay_dir.glob("*.npz"):
+            _, _, eps_len = fn.stem.split("_")
             self._num_episodes += 1
             self._num_transitions += int(eps_len)
 
@@ -141,14 +141,13 @@ class ReplayBufferStorage:
         eps_len = episode_len(episode)
         self._num_episodes += 1
         self._num_transitions += eps_len
-        ts = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
-        eps_fn = f'{ts}_{eps_idx}_{eps_len}.npz'
+        ts = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+        eps_fn = f"{ts}_{eps_idx}_{eps_len}.npz"
         save_episode(episode, self._replay_dir / eps_fn)
 
 
 class ReplayBuffer(IterableDataset):
-    def __init__(self, replay_dir, max_size, num_workers, nstep, discount,
-                 fetch_every, save_snapshot):
+    def __init__(self, replay_dir, max_size, num_workers, nstep, discount, fetch_every, save_snapshot):
         self._replay_dir = replay_dir
         self._size = 0
         self._max_size = max_size
@@ -193,10 +192,10 @@ class ReplayBuffer(IterableDataset):
             worker_id = torch.utils.data.get_worker_info().id
         except:
             worker_id = 0
-        eps_fns = sorted(self._replay_dir.glob('*.npz'), reverse=True)
+        eps_fns = sorted(self._replay_dir.glob("*.npz"), reverse=True)
         fetched_size = 0
         for eps_fn in eps_fns:
-            eps_idx, eps_len = [int(x) for x in eps_fn.stem.split('_')[1:]]
+            eps_idx, eps_len = [int(x) for x in eps_fn.stem.split("_")[1:]]
             if eps_idx % self._num_workers != worker_id:
                 continue
             if eps_fn in self._episodes.keys():
@@ -216,15 +215,15 @@ class ReplayBuffer(IterableDataset):
         episode = self._sample_episode()
         # add +1 for the first dummy transition
         idx = np.random.randint(0, episode_len(episode) - self._nstep + 1) + 1
-        obs = episode['observation'][idx - 1]
-        action = episode['action'][idx]
-        next_obs = episode['observation'][idx + self._nstep - 1]
-        reward = np.zeros_like(episode['reward'][idx])
-        discount = np.ones_like(episode['discount'][idx])
+        obs = episode["observation"][idx - 1]
+        action = episode["action"][idx]
+        next_obs = episode["observation"][idx + self._nstep - 1]
+        reward = np.zeros_like(episode["reward"][idx])
+        discount = np.ones_like(episode["discount"][idx])
         for i in range(self._nstep):
-            step_reward = episode['reward'][idx + i]
+            step_reward = episode["reward"][idx + i]
             reward += discount * step_reward
-            discount *= episode['discount'][idx + i] * self._discount
+            discount *= episode["discount"][idx + i] * self._discount
         return (obs, action, reward, discount, next_obs)
 
     def __iter__(self):
@@ -244,21 +243,14 @@ def _worker_init_fn(worker_id):
     random.seed(seed)
 
 
-def make_replay_loader(replay_dir, max_size, batch_size, num_workers,
-                       save_snapshot, nstep, discount):
+def make_replay_loader(replay_dir, max_size, batch_size, num_workers, save_snapshot, nstep, discount):
     max_size_per_worker = max_size // max(1, num_workers)
 
-    iterable = ReplayBuffer(replay_dir,
-                            max_size_per_worker,
-                            num_workers,
-                            nstep,
-                            discount,
-                            fetch_every=1000,
-                            save_snapshot=save_snapshot)
+    iterable = ReplayBuffer(
+        replay_dir, max_size_per_worker, num_workers, nstep, discount, fetch_every=1000, save_snapshot=save_snapshot
+    )
 
-    loader = torch.utils.data.DataLoader(iterable,
-                                         batch_size=batch_size,
-                                         num_workers=num_workers,
-                                         pin_memory=True,
-                                         worker_init_fn=_worker_init_fn)
+    loader = torch.utils.data.DataLoader(
+        iterable, batch_size=batch_size, num_workers=num_workers, pin_memory=True, worker_init_fn=_worker_init_fn
+    )
     return loader, iterable

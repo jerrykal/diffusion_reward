@@ -14,12 +14,18 @@ class Discriminator(nn.Module):
 
         for i in range(1, n_layers + 1):
             num_filters_mult_last = num_filters_mult
-            num_filters_mult = min(2 ** i, 8)
+            num_filters_mult = min(2**i, 8)
             layers += [
-                nn.Conv2d(num_filters_last * num_filters_mult_last, num_filters_last * num_filters_mult, 4,
-                          2 if i < n_layers else 1, 1, bias=False),
+                nn.Conv2d(
+                    num_filters_last * num_filters_mult_last,
+                    num_filters_last * num_filters_mult,
+                    4,
+                    2 if i < n_layers else 1,
+                    1,
+                    bias=False,
+                ),
                 nn.BatchNorm2d(num_filters_last * num_filters_mult),
-                nn.LeakyReLU(0.2, True)
+                nn.LeakyReLU(0.2, True),
             ]
 
         layers.append(nn.Conv2d(num_filters_last * num_filters_mult, 1, 4, 1, 1))

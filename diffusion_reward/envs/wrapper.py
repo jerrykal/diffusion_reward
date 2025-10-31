@@ -34,23 +34,21 @@ class MetaWorldWrapper(gym.Wrapper):
     def _stacked_obs(self):
         assert len(self._frames) == self._num_frames
         return np.concatenate(list(self._frames), axis=0)
-    
+
     def _get_pixel_obs(self, pixel_obs):
-        return pixel_obs[:, :, ::-1].transpose(
-            2, 0, 1
-        )
-    
+        return pixel_obs[:, :, ::-1].transpose(2, 0, 1)
+
     def reset(self):
         self.env.set_task(self.mt1.train_tasks[random.randint(0, 49)])
         self._state_obs, info = self.env.reset()
         obs = self.env.render().transpose(2, 0, 1)
-        return obs.copy(), info  
+        return obs.copy(), info
 
     def step(self, action):
         rewards = 0
         for _ in range(self._action_repeat):
             next_obs, _, trunc, termn, info = self.env.step(action)
-            rewards += int(info['success']) 
+            rewards += int(info["success"])
         self._state_obs = next_obs
         next_obs = self.env.render().transpose(2, 0, 1).copy()
         return next_obs, rewards, False, info
@@ -69,7 +67,6 @@ class MetaWorldWrapper(gym.Wrapper):
         return getattr(self.env, name)
 
 
-
 class TimeLimitWrapper(gym.Wrapper):
     def __init__(self, env, max_episode_steps=None):
         super(TimeLimitWrapper, self).__init__(env)
@@ -81,9 +78,7 @@ class TimeLimitWrapper(gym.Wrapper):
         self._elapsed_steps = None
 
     def step(self, action):
-        assert (
-            self._elapsed_steps is not None
-        ), "Cannot call env.step() before calling reset()"
+        assert self._elapsed_steps is not None, "Cannot call env.step() before calling reset()"
         observation, reward, done, info = self.env.step(action)
         self._elapsed_steps += 1
         if self._elapsed_steps >= self._max_episode_steps:
@@ -94,7 +89,7 @@ class TimeLimitWrapper(gym.Wrapper):
     def reset(self, **kwargs):
         self._elapsed_steps = 0
         return self.env.reset(**kwargs)
-    
+
     def render(self):
         return self.env.render()
 
@@ -105,23 +100,18 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
 
     def reset(self):
         obs, info = self._env.reset()
-        return self._augment_time_step(obs, state=self.prop_state()) 
+        return self._augment_time_step(obs, state=self.prop_state())
 
     def step(self, action):
         next_obs, reward, done, info = self._env.step(action)
         discount = 1.0
-        is_success = info['success']
-        return self._augment_time_step(next_obs,
-                                       next_obs, 
-                                       action,
-                                       reward,
-                                       is_success,
-                                       discount,
-                                       done)
+        is_success = info["success"]
+        return self._augment_time_step(next_obs, next_obs, action, reward, is_success, discount, done)
+
     def prop_state(self):
         state = self._env.state()
         return np.concatenate((state[:4], state[18 : 18 + 4]))
-    
+
     def _augment_time_step(self, obs, state, action=None, reward=None, success=False, discount=1.0, done=False):
         if action is None:
             action_spec = self.action_spec()
@@ -130,22 +120,20 @@ class ExtendedTimeStepWrapper(dm_env.Environment):
             success = 0.0
             discount = 1.0
             done = False
-        return ExtendedTimeStep(observation=obs, 
-                                state=state, 
-                                action=action,
-                                reward=reward,
-                                is_success=success, 
-                                discount=discount,
-                                done=done)
-    
+        return ExtendedTimeStep(
+            observation=obs, state=state, action=action, reward=reward, is_success=success, discount=discount, done=done
+        )
+
     def state_spec(self):
-        return specs.BoundedArray((8,), np.float32, name='state', minimum=0, maximum=255)
-    
+        return specs.BoundedArray((8,), np.float32, name="state", minimum=0, maximum=255)
+
     def observation_spec(self):
-        return specs.BoundedArray(self._env.observation_space.shape, np.uint8, name='observation', minimum=0, maximum=255)
+        return specs.BoundedArray(
+            self._env.observation_space.shape, np.uint8, name="observation", minimum=0, maximum=255
+        )
 
     def action_spec(self):
-        return specs.BoundedArray(self._env.action_space.shape, np.float32, name='action', minimum=-1, maximum=1.0)
+        return specs.BoundedArray(self._env.action_space.shape, np.float32, name="action", minimum=-1, maximum=1.0)
 
     def __getattr__(self, name):
         return getattr(self._env, name)

@@ -1,5 +1,6 @@
-import numpy as np
 import copy
+
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -23,7 +24,7 @@ def fit_data(model, x, y, optimizer, loss_func, batch_size, epochs):
         ep_loss = 0.0
         num_steps = int(num_samples / batch_size) - 1
         for mb in range(num_steps):
-            data_idx = rand_idx[mb*batch_size:(mb+1)*batch_size]
+            data_idx = rand_idx[mb * batch_size : (mb + 1) * batch_size]
             batch_x = x[data_idx]
             batch_y = y[data_idx]
             optimizer.zero_grad()
@@ -32,5 +33,5 @@ def fit_data(model, x, y, optimizer, loss_func, batch_size, epochs):
             loss.backward()
             optimizer.step()
             ep_loss += loss.detach()
-        epoch_losses.append(ep_loss.to('cpu').data.numpy().ravel() / num_steps)
+        epoch_losses.append(ep_loss.to("cpu").data.numpy().ravel() / num_steps)
     return epoch_losses

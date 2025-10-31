@@ -22,7 +22,7 @@ class RND(nn.Module):
 
     @torch.no_grad()
     def calc_reward(self, imgs):
-        zero_rewards = torch.zeros((imgs.shape[1])).unsqueeze(1)
+        zero_rewards = torch.zeros(imgs.shape[1]).unsqueeze(1)
         return zero_rewards
 
     def update(self, batch):
@@ -32,5 +32,5 @@ class RND(nn.Module):
 
     @torch.no_grad()
     def calc_expl_reward(self, obs, next_obs):
-        expl_rewards = self.expl_reward.calc_reward(obs, next_obs) * self.expl_scale    
-        return expl_rewards 
+        expl_rewards = self.expl_reward.calc_reward(obs, next_obs) * self.expl_scale
+        return expl_rewards

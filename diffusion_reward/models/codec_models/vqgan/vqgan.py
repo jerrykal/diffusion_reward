@@ -45,7 +45,7 @@ class VQGAN(nn.Module):
         return 0.8 * λ
 
     @staticmethod
-    def adopt_weight(disc_factor, i, threshold, value=0.):
+    def adopt_weight(disc_factor, i, threshold, value=0.0):
         if i < threshold:
             disc_factor = value
         return disc_factor

@@ -19,53 +19,29 @@ class RND(nn.Module):
 
         feature_output = 7 * 7 * 64
         self.predictor = nn.Sequential(
-            nn.Conv2d(
-                in_channels=3,
-                out_channels=32,
-                kernel_size=6,
-                stride=3),
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=6, stride=3),
             nn.LeakyReLU(),
-            nn.Conv2d(
-                in_channels=32,
-                out_channels=64,
-                kernel_size=4,
-                stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.LeakyReLU(),
-            nn.Conv2d(
-                in_channels=64,
-                out_channels=64,
-                kernel_size=3,
-                stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.LeakyReLU(),
             Flatten(),
             nn.Linear(feature_output, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(512, 512)
+            nn.Linear(512, 512),
         )
 
         self.target = nn.Sequential(
-            nn.Conv2d(
-                in_channels=3,
-                out_channels=32,
-                kernel_size=6,
-                stride=3),
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=6, stride=3),
             nn.LeakyReLU(),
-            nn.Conv2d(
-                in_channels=32,
-                out_channels=64,
-                kernel_size=4,
-                stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.LeakyReLU(),
-            nn.Conv2d(
-                in_channels=64,
-                out_channels=64,
-                kernel_size=3,
-                stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.LeakyReLU(),
             Flatten(),
-            nn.Linear(feature_output, 512)
+            nn.Linear(feature_output, 512),
         )
 
         for p in self.modules():
@@ -98,7 +74,7 @@ class RND(nn.Module):
 
     def update(self, batch):
         metrics = dict()
-        
+
         _, _, _, _, next_obs = batch
         next_obs = torch.as_tensor(next_obs, device=self.device)
 
@@ -109,5 +85,5 @@ class RND(nn.Module):
         loss.backward()
         self.optim.step()
 
-        metrics['rnd_loss'] = loss.item()
+        metrics["rnd_loss"] = loss.item()
         return metrics

@@ -7,13 +7,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from diffusion_reward.models.video_models.videogpt.transformer import \
-    VideoGPTTransformer
-from diffusion_reward.models.video_models.videogpt.utils import load_video_data
 from torchvision import utils as vutils
 from tqdm import tqdm
 
-matplotlib.use('Agg')
+from diffusion_reward.models.video_models.videogpt.transformer import VideoGPTTransformer
+from diffusion_reward.models.video_models.videogpt.utils import load_video_data
+
+matplotlib.use("Agg")
 import hydra
 import matplotlib.pyplot as plt
 
@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 class TrainTransformer:
     def __init__(self, args):
         self.args = args
-        self.work_dir = 'results'
+        self.work_dir = "results"
         self.model = VideoGPTTransformer(args).to(device=args.device)
         self.optim = self.configure_optimizers()
 
@@ -34,12 +34,12 @@ class TrainTransformer:
             shutil.rmtree(f"{self.work_dir}/results")
         os.makedirs(f"{self.work_dir}/results", exist_ok=True)
         if os.path.exists(f"{self.work_dir}/checkpoints"):
-            shutil.rmtree(f"{self.work_dir}/checkpoints") 
+            shutil.rmtree(f"{self.work_dir}/checkpoints")
         os.makedirs(f"{self.work_dir}/checkpoints", exist_ok=True)
-        
+
     def configure_optimizers(self):
         decay, no_decay = set(), set()
-        whitelist_weight_modules = (nn.Linear, )
+        whitelist_weight_modules = (nn.Linear,)
         blacklist_weight_modules = (nn.LayerNorm, nn.Embedding)
 
         for mn, m in self.model.transformer.named_modules():
@@ -78,7 +78,7 @@ class TrainTransformer:
 
     def train(self, args):
         train_dataset, val_dataset = load_video_data(args)
-        best_loss = float('inf')
+        best_loss = float("inf")
         for epoch in range(args.epochs):
             with tqdm(range(len(train_dataset))) as pbar:
                 for i, imgs in zip(pbar, train_dataset):
@@ -93,10 +93,10 @@ class TrainTransformer:
                 is_best = val_loss < best_loss
                 best_loss = min(val_loss, best_loss)
                 if is_best:
-                    print(f'Checkpoint at epoch {epoch} is saved with eval loss {best_loss} !!!')
+                    print(f"Checkpoint at epoch {epoch} is saved with eval loss {best_loss} !!!")
                     torch.save(self.model.state_dict(), os.path.join(f"{self.work_dir}/checkpoints/videogpt.pt"))
 
-    def compute_loss(self, imgs):                
+    def compute_loss(self, imgs):
         imgs = imgs.to(device=self.args.device)
         logits, targets = self.model.output(imgs, True)
         loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
@@ -108,5 +108,5 @@ def main(args):
     TrainTransformer(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
