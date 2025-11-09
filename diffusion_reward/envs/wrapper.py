@@ -6,6 +6,7 @@ import dm_env
 import gym
 import numpy as np
 from dm_env import StepType, specs
+from PIL import Image
 
 
 class MetaWorldWrapper(gym.Wrapper):
@@ -38,10 +39,17 @@ class MetaWorldWrapper(gym.Wrapper):
     def _get_pixel_obs(self, pixel_obs):
         return pixel_obs[:, :, ::-1].transpose(2, 0, 1)
 
+    def _resize_obs(self, obs):
+        img = Image.fromarray(obs.transpose(1, 2, 0))
+        img = img.resize(self._res, Image.BILINEAR)
+        resized = np.array(img).transpose(2, 0, 1)
+        return resized
+
     def reset(self):
         self.env.set_task(self.mt1.train_tasks[random.randint(0, 49)])
         self._state_obs, info = self.env.reset()
         obs = self.env.render().transpose(2, 0, 1)
+        obs = self._resize_obs(obs)
         return obs.copy(), info
 
     def step(self, action):
@@ -50,7 +58,8 @@ class MetaWorldWrapper(gym.Wrapper):
             next_obs, _, trunc, termn, info = self.env.step(action)
             rewards += int(info["success"])
         self._state_obs = next_obs
-        next_obs = self.env.render().transpose(2, 0, 1).copy()
+        next_obs = self.env.render().transpose(2, 0, 1)
+        next_obs = self._resize_obs(next_obs).copy()
         return next_obs, rewards, False, info
 
     def render(self):
