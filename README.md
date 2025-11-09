@@ -30,6 +30,8 @@ Setup virtual environment and install all dependencies.
 uv sync
 ```
 
+> NOTE: Additional setup are required to get the correct camera position for the metaworld tasks, please refers to [here](https://github.com/TEA-Lab/diffusion_reward/issues/1).
+
 ## 💻 Reproducing Experimental Results
 
 ### Download Video Demonstrations

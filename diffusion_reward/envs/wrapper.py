@@ -2,11 +2,11 @@ import random
 from collections import deque
 from typing import Any, NamedTuple
 
+import cv2
 import dm_env
 import gym
 import numpy as np
 from dm_env import StepType, specs
-from PIL import Image
 
 
 class MetaWorldWrapper(gym.Wrapper):
@@ -40,10 +40,16 @@ class MetaWorldWrapper(gym.Wrapper):
         return pixel_obs[:, :, ::-1].transpose(2, 0, 1)
 
     def _resize_obs(self, obs):
-        img = Image.fromarray(obs.transpose(1, 2, 0))
-        img = img.resize(self._res, Image.BILINEAR)
-        resized = np.array(img).transpose(2, 0, 1)
-        return resized
+        # obs shape: (C, H, W)
+        c, h, w = obs.shape
+        if (h, w) != self._res:
+            # transpose to (H, W, C) for cv2
+            img = obs.transpose(1, 2, 0)
+            resized_img = cv2.resize(img, self._res, interpolation=cv2.INTER_LINEAR)
+            # transpose back to (C, H, W)
+            obs = resized_img.transpose(2, 0, 1)
+
+        return obs
 
     def reset(self):
         self.env.set_task(self.mt1.train_tasks[random.randint(0, 49)])
