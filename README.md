@@ -13,7 +13,9 @@ This is the official PyTorch implementation of the paper "[**Diffusion Reward: L
   <img width="99%" src="docs/diffusion_reward_overview.png">
 </p>
 
-# 🛠️ Installation Instructions
+## 🛠️ Installation Instructions
+
+First, make sure [uv](https://docs.astral.sh/uv/) is installed.
 
 Clone this repository.
 
@@ -22,38 +24,15 @@ git clone https://github.com/TaoHuang13/diffusion_reward.git
 cd diffusion_reward
 ```
 
-Create a virtual environment.
+Setup virtual environment and install all dependencies.
 
 ```bash
-conda env create -f conda_env.yml
-conda activate diffusion_reward
-pip install -e .
+uv sync
 ```
 
-Install extra dependencies.
+## 💻 Reproducing Experimental Results
 
-- Install PyTorch.
-
-```bash
-pip3 install torch==1.12.1+cu116 torchvision==0.13.1+cu116 --extra-index-url https://download.pytorch.org/whl/cu116
-```
-
-- Install mujoco210 and mujoco-py following instructions [here](https://github.com/openai/mujoco-py#install-mujoco).
-
-- Install Adroit dependencies.
-
-```bash
-cd env_dependencies
-pip install -e mj_envs/.
-pip install -e mjrl/.
-cd ..
-```
-
-- Install MetaWorld: `pip install git+https://github.com/Farama-Foundation/Metaworld.git@c822f28f582ba1ad49eb5dcf61016566f28003ba`
-
-# 💻 Reproducing Experimental Results
-
-## Download Video Demonstrations
+### Download Video Demonstrations
 
 |Domain        | Tasks | Episodes| Size | Collection | Link  |
 |:------------- |:-------------:|:-----:|:----:|:-----:|:-----:|
@@ -62,7 +41,7 @@ cd ..
 
 You can download the datasets and place them to  `/video_dataset` to reproduce the results in this paper.
 
-## Pretrain Reward Models
+### Pretrain Reward Models
 
 Train VQGAN encoder.
 
@@ -76,11 +55,11 @@ Train video models.
 bash scripts/run/video_model/${video_model}_${domain}.sh    # [vqdiffusion, videogpt]_[adroit, metaworld]
 ```
 
-### (Optinal) Download Pre-trained Models
+#### (Optinal) Download Pre-trained Models
 
 We also provide the pre-trained reward models (including Diffusion Reward and VIPER) used in this paper for result reproduction. You may download the models with configuration files [here](https://huggingface.co/tauhuang/diffusion_reward/tree/main), and place the folders in `/exp_local`.
 
-## Train RL with Pre-trained Rewards
+### Train RL with Pre-trained Rewards
 
 Train DrQv2 with different rewards.
 
@@ -90,7 +69,7 @@ bash scripts/run/rl/drqv2_${domain}_${reward}.sh ${task}    # [adroit, metaworld
 
 Notice that you should login [wandb](https://wandb.ai/site) for logging experiments online. Turn it off, if you aim to log locally, in configuration file [here](diffusion_reward/configs/rl//default.yaml#L24).
 
-# 🧭 Code Navigation
+## 🧭 Code Navigation
 
 ```
 diffusion_reward
@@ -111,19 +90,19 @@ diffusion_reward
   |- rl                    # implements core rl algorithms
 ```
 
-# ✉️ Contact
+## ✉️ Contact
 
 For any questions, please feel free to email <taou.cs13@gmail.com> or <luccachiang@gmail.com>.
 
-# 🙏 Acknowledgement
+## 🙏 Acknowledgement
 
 Our code is built upon [VQGAN](https://github.com/dome272/VQGAN-pytorch), [VQ-Diffusion](https://github.com/microsoft/VQ-Diffusion), [VIPER](https://github.com/Alescontrela/viper_rl), [AMP](https://github.com/med-air/DEX), [RND](https://github.com/jcwleo/random-network-distillation-pytorch), and [DrQv2](https://github.com/facebookresearch/drqv2). We thank all these authors for their nicely open sourced code and their great contributions to the community.
 
-# 🏷️ License
+## 🏷️ License
 
 This repository is released under the MIT license. See [LICENSE](LICENSE) for additional details.
 
-# 📝 Citation
+## 📝 Citation
 
 If you find our work useful, please consider citing:
 
