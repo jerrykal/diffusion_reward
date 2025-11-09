@@ -22,9 +22,10 @@ dependencies:
       - wandb==0.15.4
       - hydra-core==1.1.0
       - hydra-submitit-launcher==1.1.5
-      - gym==0.21.0
+      - git+https://github.com/jerrykal/gym.git@v0.21.0-custom.1
       - setuptools==63.2.0
       - tb-nightly
       - tqdm
       - einops
       - dm_env
+      - cython<3
